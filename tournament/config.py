@@ -11,7 +11,6 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 DEFAULT_TIMEZONE = "America/Los_Angeles"
 DEFAULT_TEAM_DEADLINE = "2026-11-30T23:59:59"
 DEFAULT_SUBSTITUTE_DEADLINE = "2026-12-11T23:59:59"
-DEFAULT_CATEGORY_NAME = "Tourney Controls"
 
 
 def _required(name: str) -> str:
@@ -54,7 +53,7 @@ class Settings:
     organizer_user_ids: frozenset[int] = frozenset()
     max_teams: int = 8
     confirmation_ttl_hours: int = 48
-    category_name: str = DEFAULT_CATEGORY_NAME
+    registration_channel_id: int | None = None
 
     @property
     def timezone(self) -> ZoneInfo:
@@ -98,6 +97,7 @@ class Settings:
             token=_required("DISCORD_TOKEN"),
             database_url=database_url,
             guild_id=guild_id,
+            registration_channel_id=_optional_int("TOURNAMENT_REGISTRATION_CHANNEL_ID"),
             timezone_name=timezone_name,
             team_deadline=parse_local_deadline(
                 os.getenv("TEAM_REGISTRATION_DEADLINE", DEFAULT_TEAM_DEADLINE), timezone
@@ -107,7 +107,5 @@ class Settings:
             ),
             lynx_user_id=lynx,
             organizer_user_ids=frozenset(extra),
-            category_name=os.getenv("TOURNAMENT_CATEGORY_NAME", DEFAULT_CATEGORY_NAME).strip()
-            or DEFAULT_CATEGORY_NAME,
         )
 

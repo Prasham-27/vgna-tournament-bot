@@ -31,8 +31,8 @@ the PostgreSQL connection string supplied through `DATABASE_URL`.
 1. Load and validate environment variables, including the configured IANA timezone.
 2. Connect to PostgreSQL and apply migrations in `vgna_tourney.schema_migrations`.
 3. Validate the configured guild and required permissions.
-4. Adopt or create the exact `Tourney Controls` category and `registrations`
-   channel. Persist the panel message ID in `vgna_tourney.settings`; edit that
+4. Use the existing text channel identified by `TOURNAMENT_REGISTRATION_CHANNEL_ID`;
+   never create or move channels or categories. Persist the panel message ID in `vgna_tourney.settings`; edit that
    message in place on restart and recreate it only when it was deleted.
 5. Register the panel view and one confirmation view for every still-pending team.
    Custom IDs are deterministic, so a restart does not create duplicate actions.

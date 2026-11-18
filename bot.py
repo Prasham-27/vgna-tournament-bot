@@ -265,39 +265,23 @@ class TournamentBot(commands.Bot):
         me = guild.me
         if me is None:
             raise RuntimeError("Discord has not provided the bot member for the configured guild")
-        permissions = me.guild_permissions
-        required = {
-            "manage_channels": permissions.manage_channels,
-            "view_channel": permissions.view_channel,
-            "send_messages": permissions.send_messages,
-            "embed_links": permissions.embed_links,
-            "read_message_history": permissions.read_message_history,
-        }
-        missing = [name for name, present in required.items() if not present]
-        if missing:
-            raise RuntimeError("Bot is missing required tournament channel permissions: " + ", ".join(missing))
+        # Channel overrides are validated against the existing destination below.
 
     async def ensure_registration_channel(self, guild: discord.Guild) -> discord.TextChannel:
-        # The registrations channel is the durable anchor. If an organizer has
-        # renamed or repositioned its category, adopt that category instead of
-        # recreating/moving anything on every restart.
-        channel = discord.utils.find(lambda item: item.name == "registrations", guild.text_channels)
-        category = channel.category if channel is not None else None
-        if category is None:
-            category_names = {
-                self.settings.category_name,
-                "Tourney Controls",  # original default
-                "Toruney Info",      # organizer-customized name used by this server
-            }
-            category = discord.utils.find(lambda item: item.name in category_names, guild.categories)
-        if category is None:
-            category = await guild.create_category(
-                self.settings.category_name, reason="VGNA tournament registration setup"
+        if self.settings.registration_channel_id is None:
+            raise RuntimeError("TOURNAMENT_REGISTRATION_CHANNEL_ID is required; choose an existing text channel")
+        channel = guild.get_channel(self.settings.registration_channel_id)
+        if not isinstance(channel, discord.TextChannel):
+            raise RuntimeError(
+                "TOURNAMENT_REGISTRATION_CHANNEL_ID must identify a text channel "
+                "in the configured tournament guild"
             )
-        if channel is None:
-            channel = await guild.create_text_channel(
-                "registrations", category=category, reason="VGNA tournament registration setup"
-            )
+        permissions = channel.permissions_for(guild.me)
+        required = ("view_channel", "send_messages", "embed_links", "read_message_history")
+        missing = [name for name in required if not getattr(permissions, name)]
+        if missing:
+            raise RuntimeError("Bot is missing registration channel permissions: " + ", ".join(missing))
+        category = channel.category
         log.info(
             "registration_surface_ready",
             extra={
